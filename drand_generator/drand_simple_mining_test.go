@@ -64,6 +64,14 @@ func getDrandRandomness() []byte {
 
 	return randomness.Signature()
 }
+func validateBlock(block Block, target *big.Int) bool {
+	var hashInt big.Int
+	hashBytes, _ := hex.DecodeString(block.Hash)
+	hashInt.SetBytes(hashBytes)
+
+	// Check if the hash is less than the target
+	return hashInt.Cmp(target) == -1
+}
 
 func TestEthBlockMiningWithDrandAndMultithreading(t *testing.T) {
 	randomness := getDrandRandomness()
@@ -98,4 +106,12 @@ func TestEthBlockMiningWithDrandAndMultithreading(t *testing.T) {
 	t.Logf("Randomness: %d", randomness)
 	t.Logf("Nonce: %d", block.Nonce)
 	t.Logf("Hash: %s", block.Hash)
+
+	// Validate the block
+	isValid := validateBlock(block, target)
+	if isValid {
+		t.Log("Block is valid.")
+	} else {
+		t.Error("Block is invalid.")
+	}
 }
