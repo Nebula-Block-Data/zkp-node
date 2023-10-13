@@ -1,4 +1,4 @@
-package main
+package ether_mining
 
 import (
 	"crypto/sha256"
@@ -6,17 +6,11 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
+	"testing"
 	"time"
 )
 
-type Block struct {
-	Data      string
-	Nonce     int
-	Hash      string
-	Timestamp time.Time
-}
-
-func mine(blockData string, target *big.Int, startNonce int, nonceStep int, resultChan chan<- Block, wg *sync.WaitGroup) {
+func mine(blockData string, target *big.Int, startNonce uint64, nonceStep uint64, resultChan chan<- Block, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	var hashInt big.Int
@@ -51,21 +45,21 @@ func validateBlock(block Block, target *big.Int) bool {
 	return hashInt.Cmp(target) == -1
 }
 
-func main() {
+func TestEthBlockMining(t *testing.T) {
 	target := new(big.Int).Exp(big.NewInt(2), big.NewInt(230), nil)
 	blockData := "This is some block data"
 
-	resultChan := make(chan Block)
+	resultChan := make(chan Block, 1) // Buffer to hold the mined block
 
 	var wg sync.WaitGroup
 
-	numGoroutines := 4
+	numGoroutines := uint64(16) // Changed type to uint64
+	startTime := time.Now()     // Record the start time
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := uint64(0); i < numGoroutines; i++ { // Changed type of i to uint64
 		wg.Add(1)
 		go mine(blockData, target, i, numGoroutines, resultChan, &wg)
 	}
-
 	go func() {
 		wg.Wait()
 		close(resultChan)
@@ -73,14 +67,16 @@ func main() {
 
 	block := <-resultChan
 
-	fmt.Printf("Time taken to mine: %s\n", time.Since(block.Timestamp))
-	fmt.Printf("Nonce: %d\n", block.Nonce)
-	fmt.Printf("Hash: %s\n", block.Hash)
+	endTime := time.Now() // Record the end time
+	t.Logf("Time taken to mine: %s", endTime.Sub(startTime))
+	t.Logf("Target: %d", target)
+	t.Logf("Nonce: %d", block.Nonce)
+	t.Logf("Hash: %s", block.Hash)
 
 	isValid := validateBlock(block, target)
 	if isValid {
-		fmt.Println("Block is valid.")
+		t.Log("Block is valid.")
 	} else {
-		fmt.Println("Block is invalid.")
+		t.Error("Block is invalid.")
 	}
 }
