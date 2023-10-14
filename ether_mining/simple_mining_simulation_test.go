@@ -46,7 +46,7 @@ func validateBlock(block Block, target *big.Int) bool {
 }
 
 func TestEthBlockMining(t *testing.T) {
-	target := new(big.Int).Exp(big.NewInt(2), big.NewInt(230), nil)
+	target := new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil)
 	blockData := "This is some block data"
 
 	resultChan := make(chan Block, 1) // Buffer to hold the mined block
